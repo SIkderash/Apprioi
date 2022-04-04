@@ -1,7 +1,19 @@
+from enum import unique
 import itertools
 from collections import OrderedDict
 from re import L
+import tkinter as tk
+from tkinter import simpledialog
 
+ROOT = tk.Tk()
+
+ROOT.withdraw()
+# the input dialog
+USER_INP = simpledialog.askstring(title="Confidence Calculator",
+                                  prompt="Enter 1 to add new transaction")
+
+# check it out
+print("Hello", USER_INP)
 
 def getList(dict):
     list = []
@@ -48,7 +60,7 @@ def join(l1, l2):
     return l1
 
 
-def appriori(Lk, processedTransactions, k):
+def appriori(Lk, processedTransactions, k, sup_counter):
     L1 = OrderedDict(sorted(Lk.items()))
     L2 = L1
     #print(L1, L2)
@@ -78,16 +90,17 @@ def appriori(Lk, processedTransactions, k):
     #print(CandidateList)
     FinalList = dict()
     for items in CandidateList:
+        sup_counter[items] = CandidateList[items]
         if CandidateList[items] >= min_sup:
             FinalList[items] = CandidateList[items]
 
     if (len(FinalList.keys()) == 1):
-        return FinalList
+        return FinalList, sup_counter
 
     elif (len(FinalList.keys()) == 0):
-        return Lk
+        return Lk, sup_counter
 
-    return appriori(FinalList, processedTransactions, min_sup)
+    return appriori(FinalList, processedTransactions, min_sup, sup_counter)
 
 
 file = open("database.txt", "r")
@@ -116,5 +129,23 @@ for items in frequencyofItems:
         FinalList[items] = frequencyofItems[items]
 
 #print(FinalList)
-lastStepFrequencies = appriori(FinalList, processedTransactions, min_sup)
+sup_counter = frequencyofItems
+lastStepFrequencies, sup_counter = appriori(FinalList, processedTransactions, min_sup, sup_counter)
 print(lastStepFrequencies)
+print(sup_counter)
+user_input_A = input("Enter itemset A\n")
+user_input_B = input("Enter itemset B\n")
+itemList_A = sorted(user_input_A.split())
+itemList_B = sorted(user_input_B.split())
+formatted_A = tuple(itemList_A)
+
+union_set = itemList_A
+for items in itemList_B:
+    union_set.append(items)
+
+union_set = sorted(list(set(union_set)))
+print(tuple(union_set))
+
+print(sup_counter[tuple(union_set)])
+print(sup_counter[formatted_A])
+print("The confidence P(A=>B) = ", sup_counter[tuple(union_set)]/sup_counter[formatted_A])
